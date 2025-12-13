@@ -1,6 +1,6 @@
 [package]
 name = "macroni-n-cheese"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 [lib]
@@ -13,11 +13,12 @@ regex = "1.12.2"
 syn = { version = "2.0.111", features = ["full", "extra-traits"] }
 
 [dev-dependencies]
-criterion = "0.8.0"
+criterion = "0.8.1"
 proptest = "1.9.0"
 trybuild = { version = "1.0.114", features = ["diff"] }
 
 [features]
-default = ["doc_display", "builder_lite"]
+default = ["doc_display", "builder_lite", "minmax"]
 doc_display = []
 builder_lite = []
+minmax = []

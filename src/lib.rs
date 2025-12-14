@@ -13,6 +13,15 @@ mod ctrlc;
 #[cfg(feature = "eyre")]
 mod eyre;
 
+#[cfg(feature = "builder")]
+mod builder;
+
+#[cfg(feature = "extends")]
+mod extends;
+
+#[cfg(feature = "main")]
+mod _main;
+
 #[cfg(feature = "builder_lite")]
 #[proc_macro_derive(BuilderLite, attributes(builder))]
 /// Automatically implements the builder lite pattern for a struct
@@ -78,6 +87,49 @@ pub fn eyre(
     let input = syn::parse_macro_input!(item as syn::ItemFn);
 
     eyre::expand_eyre(input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[cfg(feature = "builder")]
+#[proc_macro_derive(Builder)]
+/// Sets up a full builder implementation for a struct.
+pub fn derive_builder(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(input as syn::DeriveInput);
+
+    builder::expand_builder(input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[cfg(feature = "extends")]
+#[proc_macro_attribute]
+/// Takes a given function and moves it into a custom `impl` block for a given struct/enum.
+///
+/// Supports both `&self` methods and associated functions (non-`&self` methods).
+pub fn extends(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let config = syn::parse_macro_input!(attr as extends::ExtendsConfig);
+    let input = syn::parse_macro_input!(item as syn::ItemFn);
+
+    extends::expand_extends(config, input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[cfg(feature = "main")]
+#[proc_macro_attribute]
+/// Allows using another name for the main function.
+pub fn main(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let config = syn::parse_macro_input!(attr as _main::MainConfig);
+    let input = syn::parse_macro_input!(item as syn::ItemFn);
+
+    _main::expand_main(config, input)
         .unwrap_or_else(|err| err.to_compile_error())
         .into()
 }

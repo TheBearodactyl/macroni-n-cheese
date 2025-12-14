@@ -1,6 +1,6 @@
 [package]
 name = "macroni-n-cheese"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 
 [lib]
@@ -13,6 +13,7 @@ regex = "1.12.2"
 syn = { version = "2.0.111", features = ["full", "extra-traits"] }
 ctrlc = { version = "3.5.1", optional = true }
 color-eyre = { version = "0.6.5", optional = true }
+tokio = { version = "1.48.0", features = ["full"], optional = true }
 
 [dev-dependencies]
 criterion = "0.8.1"
@@ -20,9 +21,21 @@ proptest = "1.9.0"
 trybuild = { version = "1.0.114", features = ["diff"] }
 
 [features]
-default = ["doc_display", "builder_lite", "minmax", "ctrlc", "eyre"]
+default = [
+	"doc_display",
+	"builder_lite",
+	"minmax",
+	"ctrlc",
+	"eyre",
+	"extends",
+	"builder",
+	"main",
+]
 doc_display = []
 builder_lite = []
 minmax = []
 ctrlc = ["dep:ctrlc"]
 eyre = ["dep:color-eyre"]
+extends = []
+builder = []
+main = ["dep:color-eyre", "dep:tokio"]

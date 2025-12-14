@@ -7,6 +7,12 @@ mod doc_display;
 #[cfg(feature = "minmax")]
 mod minmax;
 
+#[cfg(feature = "ctrlc")]
+mod ctrlc;
+
+#[cfg(feature = "eyre")]
+mod eyre;
+
 #[cfg(feature = "builder_lite")]
 #[proc_macro_derive(BuilderLite, attributes(builder))]
 /// Automatically implements the builder lite pattern for a struct
@@ -41,6 +47,37 @@ pub fn minmax(
     let input = syn::parse_macro_input!(item as syn::ItemFn);
 
     minmax::expand_minmax(input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[cfg(feature = "ctrlc")]
+#[proc_macro_attribute]
+/// Registers a function as a Ctrl-C signal handler using the `ctrlc` crate.
+///
+/// The annotated function will be called when a Ctrl-C signal (SIGINT) is received.
+/// The function must have no parameters and must return `()` or have no return type.
+pub fn ctrlc(
+    _attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(item as syn::ItemFn);
+
+    ctrlc::expand_ctrlc(input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[cfg(feature = "eyre")]
+#[proc_macro_attribute]
+/// Automatically sets up color-eyre error handling for the main function.
+pub fn eyre(
+    _attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(item as syn::ItemFn);
+
+    eyre::expand_eyre(input)
         .unwrap_or_else(|err| err.to_compile_error())
         .into()
 }

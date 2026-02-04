@@ -2,7 +2,7 @@ use {
     proc_macro::TokenStream,
     quote::quote,
     syn::{
-        BinOp, Expr, ExprBinary, Ident, ItemFn,
+        BinOp, Expr, ExprBinary, ExprLit, Ident, ItemFn, Lit,
         parse::{Parse, ParseStream},
         parse_macro_input,
         visit_mut::VisitMut,
@@ -66,9 +66,24 @@ impl VisitMut for Mathinator2000 {
 }
 
 impl Mathinator2000 {
+    fn is_float_literal(expr: &Expr) -> bool {
+        if let Expr::Lit(ExprLit {
+            lit: Lit::Float(_), ..
+        }) = expr
+        {
+            true
+        } else {
+            false
+        }
+    }
+
     fn transform_binary_expr(&self, binary: &ExprBinary) -> Option<Expr> {
         let left = &binary.left;
         let right = &binary.right;
+
+        if Self::is_float_literal(left) || Self::is_float_literal(right) {
+            return None;
+        }
 
         let is_compound_assignment = matches!(
             binary.op,

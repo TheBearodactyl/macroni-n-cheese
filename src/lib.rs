@@ -1,3 +1,5 @@
+use syn::DeriveInput;
+
 #[cfg(feature = "builder_lite")]
 mod builder_lite;
 
@@ -21,6 +23,12 @@ mod extends;
 
 #[cfg(feature = "main")]
 mod _main;
+
+#[cfg(feature = "autoconstruct")]
+mod autoconstruct;
+
+#[cfg(feature = "mathinator2000")]
+mod mathinator2000;
 
 #[cfg(feature = "builder_lite")]
 #[proc_macro_derive(BuilderLite, attributes(builder))]
@@ -60,6 +68,16 @@ pub fn minmax(
         .into()
 }
 
+#[cfg(feature = "mathinator2000")]
+#[proc_macro_attribute]
+/// Replaces unchecked math with checked math
+pub fn mathinator2000(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    mathinator2000::expand_mathinator2000(attr, item)
+}
+
 #[cfg(feature = "ctrlc")]
 #[proc_macro_attribute]
 /// Registers a function as a Ctrl-C signal handler using the `ctrlc` crate.
@@ -87,6 +105,16 @@ pub fn eyre(
     let input = syn::parse_macro_input!(item as syn::ItemFn);
 
     eyre::expand_eyre(input)
+        .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[proc_macro_derive(Construct)]
+/// Automatically generates a `new` method for unit structs
+pub fn autoconstruct(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+
+    autoconstruct::expand_auto_construct(input)
         .unwrap_or_else(|err| err.to_compile_error())
         .into()
 }

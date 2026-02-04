@@ -1,3 +1,4 @@
+#![warn(clippy::get_first, clippy::index_refutable_slice)]
 use {
     proc_macro::TokenStream,
     quote::quote,
@@ -66,15 +67,14 @@ impl VisitMut for Mathinator2000 {
 }
 
 impl Mathinator2000 {
-    fn is_float_literal(expr: &Expr) -> bool {
-        if let Expr::Lit(ExprLit {
-            lit: Lit::Float(_), ..
-        }) = expr
-        {
-            true
-        } else {
-            false
-        }
+    pub(crate) fn is_float_literal(expr: &Expr) -> bool {
+        !matches!(
+            expr,
+            Expr::Lit(ExprLit {
+                lit: Lit::Float(_),
+                ..
+            })
+        )
     }
 
     fn transform_binary_expr(&self, binary: &ExprBinary) -> Option<Expr> {

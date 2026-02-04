@@ -70,55 +70,105 @@ impl Mathinator2000 {
         let left = &binary.left;
         let right = &binary.right;
 
+        let is_compound_assignment = matches!(
+            binary.op,
+            BinOp::AddAssign(_)
+                | BinOp::SubAssign(_)
+                | BinOp::MulAssign(_)
+                | BinOp::DivAssign(_)
+                | BinOp::RemAssign(_)
+        );
+
         let (base_method, op_symbol) = match binary.op {
-            BinOp::Add(_) => ("add", "+"),
-            BinOp::Sub(_) => ("sub", "-"),
-            BinOp::Mul(_) => ("mul", "*"),
-            BinOp::Div(_) => ("div", "/"),
-            BinOp::Rem(_) => ("rem", "%"),
+            BinOp::Add(_) | BinOp::AddAssign(_) => ("add", "+"),
+            BinOp::Sub(_) | BinOp::SubAssign(_) => ("sub", "-"),
+            BinOp::Mul(_) | BinOp::MulAssign(_) => ("mul", "*"),
+            BinOp::Div(_) | BinOp::DivAssign(_) => ("div", "/"),
+            BinOp::Rem(_) | BinOp::RemAssign(_) => ("rem", "%"),
             _ => return None,
         };
 
-        match self.mode {
-            OverflowMode::Checked => {
-                let method = format!("checked_{}", base_method);
-                let method_ident = Ident::new(&method, proc_macro2::Span::call_site());
+        if is_compound_assignment {
+            match self.mode {
+                OverflowMode::Checked => {
+                    let method = format!("checked_{}", base_method);
+                    let method_ident = Ident::new(&method, proc_macro2::Span::call_site());
 
-                Some(syn::parse_quote! {
-                    {
-                        let __left_val = #left;
-                        let __right_val = #right;
-                        __left_val.#method_ident(__right_val)
+                    Some(syn::parse_quote! {
+                        #left = #left.#method_ident(#right)
                             .expect(&::std::format!(
-                                "Arithmetic overflow: {} {} {} exceeds type bounds at {}:{}",
-                                __left_val,
+                                "Arithmetic overflow: {} {}= {} exceeds type bounds at {}:{}",
+                                #left,
                                 #op_symbol,
-                                __right_val,
+                                #right,
                                 ::std::file!(),
                                 ::std::line!()
                             ))
-                    }
-                })
-            }
-            OverflowMode::Saturating => {
-                if base_method == "rem" {
-                    return None;
+                    })
                 }
+                OverflowMode::Saturating => {
+                    if base_method == "rem" {
+                        return None;
+                    }
 
-                let method = format!("saturating_{}", base_method);
-                let method_ident = Ident::new(&method, proc_macro2::Span::call_site());
+                    let method = format!("saturating_{}", base_method);
+                    let method_ident = Ident::new(&method, proc_macro2::Span::call_site());
 
-                Some(syn::parse_quote! {
-                    (#left).#method_ident(#right)
-                })
+                    Some(syn::parse_quote! {
+                        #left = (#left).#method_ident(#right)
+                    })
+                }
+                OverflowMode::Wrapping => {
+                    let method = format!("wrapping_{}", base_method);
+                    let method_ident = Ident::new(&method, proc_macro2::Span::call_site());
+
+                    Some(syn::parse_quote! {
+                        #left = (#left).#method_ident(#right)
+                    })
+                }
             }
-            OverflowMode::Wrapping => {
-                let method = format!("wrapping_{}", base_method);
-                let method_ident = Ident::new(&method, proc_macro2::Span::call_site());
+        } else {
+            match self.mode {
+                OverflowMode::Checked => {
+                    let method = format!("checked_{}", base_method);
+                    let method_ident = Ident::new(&method, proc_macro2::Span::call_site());
 
-                Some(syn::parse_quote! {
-                    (#left).#method_ident(#right)
-                })
+                    Some(syn::parse_quote! {
+                        {
+                            let __left_val = #left;
+                            let __right_val = #right;
+                            __left_val.#method_ident(__right_val)
+                                .expect(&::std::format!(
+                                    "Arithmetic overflow: {} {} {} exceeds type bounds at {}:{}",
+                                    __left_val,
+                                    #op_symbol,
+                                    __right_val,
+                                    ::std::file!(),
+                                    ::std::line!()
+                                ))
+                        }
+                    })
+                }
+                OverflowMode::Saturating => {
+                    if base_method == "rem" {
+                        return None;
+                    }
+
+                    let method = format!("saturating_{}", base_method);
+                    let method_ident = Ident::new(&method, proc_macro2::Span::call_site());
+
+                    Some(syn::parse_quote! {
+                        (#left).#method_ident(#right)
+                    })
+                }
+                OverflowMode::Wrapping => {
+                    let method = format!("wrapping_{}", base_method);
+                    let method_ident = Ident::new(&method, proc_macro2::Span::call_site());
+
+                    Some(syn::parse_quote! {
+                        (#left).#method_ident(#right)
+                    })
+                }
             }
         }
     }

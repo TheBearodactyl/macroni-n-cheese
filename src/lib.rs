@@ -30,6 +30,9 @@ mod autoconstruct;
 #[cfg(feature = "mathinator2000")]
 mod mathinator2000;
 
+#[cfg(feature = "swizzle")]
+mod swizzle;
+
 #[cfg(feature = "builder_lite")]
 #[proc_macro_derive(BuilderLite, attributes(builder))]
 /// Automatically implements the builder lite pattern for a struct
@@ -51,6 +54,15 @@ pub fn derive_doc_display(input: proc_macro::TokenStream) -> proc_macro::TokenSt
 
     doc_display::expand_doc_display(input)
         .unwrap_or_else(|err| err.to_compile_error())
+        .into()
+}
+
+#[cfg(feature = "swizzle")]
+#[proc_macro_derive(Swizzle, attributes(swizzle))]
+pub fn derive_swizzle(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+    swizzle::expand_swizzle(input)
+        .unwrap_or_else(|e| e.to_compile_error())
         .into()
 }
 
@@ -109,6 +121,7 @@ pub fn eyre(
         .into()
 }
 
+#[cfg(feature = "autoconstruct")]
 #[proc_macro_derive(Construct)]
 /// Automatically generates a `new` method for unit structs
 pub fn autoconstruct(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

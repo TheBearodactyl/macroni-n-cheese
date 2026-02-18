@@ -1,6 +1,6 @@
 [package]
 name = "macroni-n-cheese"
-version = "0.1.61"
+version = "0.1.7"
 edition = "2024"
 readme = "README.md"
 license-file = "./LICENSE"
@@ -34,6 +34,7 @@ default = [
     "main",
     "autoconstruct",
     "mathinator2000",
+    "swizzle",
 ]
 doc_display = []
 builder_lite = []
@@ -45,3 +46,4 @@ extends = []
 builder = []
 mathinator2000 = []
 main = ["dep:color-eyre", "dep:tokio"]
+swizzle = []

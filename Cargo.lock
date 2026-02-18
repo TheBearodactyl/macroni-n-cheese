@@ -179,7 +179,7 @@ dependencies = [
 
 [[package]]
 name = "macroni-n-cheese"
-version = "0.1.61"
+version = "0.1.7"
 dependencies = [
  "color-eyre",
  "ctrlc",
